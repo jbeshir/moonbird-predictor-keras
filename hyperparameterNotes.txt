@@ -1,0 +1,8 @@
+MSE with various different hyperparameters:
+
+n_a=1,epochs=100 0.1672
+n_a=2,epochs=100 0.1655
+n_a=3,epochs=100 0.1649
+n_a=4,epochs=100 0.164,0.1650,0.1636
+n_a=5,epochs=100 0.164,0.1638
+n_a=6,epochs=100 0.1643
