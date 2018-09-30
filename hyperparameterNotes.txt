@@ -1,8 +1,15 @@
 MSE with various different hyperparameters:
 
-n_a=1,epochs=100 0.1672
-n_a=2,epochs=100 0.1655
-n_a=3,epochs=100 0.1649
-n_a=4,epochs=100 0.164,0.1650,0.1636
-n_a=5,epochs=100 0.164,0.1638
-n_a=6,epochs=100 0.1643
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=1 0.1672
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=2 0.1655
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=3 0.1649
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=4 0.164,0.1650,0.1636
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=5 0.164,0.1638
+epochs=100,padvalue=-1,layer=SimpleRNN,n_a=6 0.1643
+
+epochs=100,padvalue=-1,layer=GRU,n_a=2 0.1642
+epochs=100,padvalue=-1,layer=GRU,n_a=4 0.1653
+
+epochs=100,padvalue=-1,layer=LSTM,n_a=2 0.1644
+
+epochs=100,padvalue=0,layer=SimpleRNN,n_a=4 0.1642

@@ -1,13 +1,21 @@
 import numpy as np
 import pandas as pd
 from keras.models import Model
-from keras.layers import Dense, Input, SimpleRNN
+from keras.layers import Dense, Input, GRU, LSTM, SimpleRNN
 from sklearn.preprocessing import StandardScaler
 
 
-def buildmodel(n_a):
+def buildmodel(n_a, layer):
+
     x = Input((None, 1))
-    y = SimpleRNN(n_a)(x)
+
+    if layer == "GRU":
+        y = GRU(n_a)(x)
+    elif layer == "LSTM":
+        y = LSTM(n_a)(x)
+    else:
+        y = SimpleRNN(n_a)(x)
+
     y = Dense(1, activation='sigmoid')(y)
 
     model = Model(inputs=[x], outputs=[y])
@@ -15,7 +23,7 @@ def buildmodel(n_a):
     return model
 
 
-def loaddata(summaryfile, scaler):
+def loaddata(summaryfile, scaler, padvalue):
     summarydata = pd.read_csv(summaryfile, sep=',', header=None)
     allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
 
@@ -32,7 +40,7 @@ def loaddata(summaryfile, scaler):
 
     # We put our padding at the start rather than the end of the data,
     # to make it easier to learn.
-    x = np.full((summarydata.shape[0], maxestimates, 1), -1, np.float32)
+    x = np.full((summarydata.shape[0], maxestimates, 1), padvalue, np.float32)
     for i in range(summarydata.shape[0]):
         for j in range(len(xlists[i])):
             x[i, j+maxestimates-len(xlists[i]), 0] = xlists[i][j]
