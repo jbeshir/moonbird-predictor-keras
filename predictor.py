@@ -4,10 +4,12 @@ from keras.models import Model
 from keras.layers import Dense, Input, GRU, LSTM, SimpleRNN
 from sklearn.preprocessing import StandardScaler
 
+Features = 1
+
 
 def buildmodel(n_a, layer):
 
-    x = Input((None, 1))
+    x = Input((None, Features))
 
     if layer == "GRU":
         y = GRU(n_a)(x)
@@ -27,33 +29,37 @@ def loaddata(summaryfile, scaler, padvalue):
     summarydata = pd.read_csv(summaryfile, sep=',', header=None)
     allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
 
-    xlists = []
+    xlists_estimates = []
+    # xlists_times = []
     y = np.zeros((summarydata.shape[0], 1))
     maxestimates = 0
     for i in range(summarydata.shape[0]):
         responses = allresponses[(allresponses[0] == summarydata.iloc[i, 0]) & allresponses[2].notnull()]
         estimates = responses[2].values.tolist()
-        xlists.append(estimates)
+        xlists_estimates.append(estimates)
+        # xlists_times.append(responses[1].values.tolist())
         y[i][0] = (1 if summarydata.iloc[i, 5] == 1 else 0)
         if len(estimates) > maxestimates:
             maxestimates = len(estimates)
 
     # We put our padding at the start rather than the end of the data,
     # to make it easier to learn.
-    x = np.full((summarydata.shape[0], maxestimates, 1), padvalue, np.float32)
+    x = np.full((summarydata.shape[0], maxestimates, Features), padvalue, np.float32)
     for i in range(summarydata.shape[0]):
-        for j in range(len(xlists[i])):
-            x[i, j+maxestimates-len(xlists[i]), 0] = xlists[i][j]
+        for j in range(len(xlists_estimates[i])):
+            x[i, j+maxestimates-len(xlists_estimates[i]), 0] = xlists_estimates[i][j]
+            # x[i, j+maxestimates-len(xlists_estimates[i]), 1] = summarydata.iloc[i, 2] - xlists_times[i][j]
 
-    x.shape = (summarydata.shape[0] * maxestimates, 1)
+    x.shape = (summarydata.shape[0] * maxestimates, Features)
 
-    if scaler is None:
+    if isinstance(scaler, bool) and scaler:
         scaler = StandardScaler()
         scaler.fit(x)
 
-    scaler.transform(x, copy=None)
+    if isinstance(scaler, StandardScaler):
+        x = scaler.transform(x, copy=None)
 
-    x.shape = (summarydata.shape[0], maxestimates, 1)
+    x.shape = (summarydata.shape[0], maxestimates, Features)
 
     return x, y, scaler
 
@@ -73,13 +79,14 @@ def avg_probability(x):
     return y_avg
 
 
-def predict(m, xlist, scaler):
-    x = np.full((1, len(xlist), 1), -1, np.float32)
-    for i in range(len(xlist)):
-        x[0, i, 0] = xlist[i]
+def predict(m, xlist_estimates, scaler):
+    x = np.full((1, len(xlist_estimates), Features), -1, np.float32)
+    for i in range(len(xlist_estimates)):
+        x[0, i, 0] = xlist_estimates[i]
+        # x[0, i, 1] = duetime - xlist_times[i]
 
-    x.shape = (len(xlist), 1)
+    x.shape = (len(xlist_estimates), Features)
     scaler.transform(x, copy=None)
-    x.shape = (1, len(xlist), 1)
+    x.shape = (1, len(xlist_estimates), Features)
 
     return m.predict(x)

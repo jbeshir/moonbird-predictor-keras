@@ -1,15 +1,42 @@
-MSE with various different hyperparameters:
+MSE with various different hyperparameters with only the estimates as features
 
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=1 0.1672
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=2 0.1655
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=3 0.1649
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=4 0.164,0.1650,0.1636
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=5 0.164,0.1638
-epochs=100,padvalue=-1,layer=SimpleRNN,n_a=6 0.1643
+Assume by default:
+- Working input scaling
+- epochs=100
+- padvalue=-1
+- layer=SimpleRNN
+- n_a=4
 
-epochs=100,padvalue=-1,layer=GRU,n_a=2 0.1642
-epochs=100,padvalue=-1,layer=GRU,n_a=4 0.1653
+MSE is for CV set; if train set is omitted, CV set performed better than it.
 
-epochs=100,padvalue=-1,layer=LSTM,n_a=2 0.1644
+After working input scaling:
 
-epochs=100,padvalue=0,layer=SimpleRNN,n_a=4 0.1642
+layer=GRU 0.1635
+layer=LSTM 0.1636
+All default: 0.1637
+n_a=6 0.1643
+n_a=1 0.2457
+
+After adding prediction time relative to due date as a feature (with working input scaling):
+
+All default: 0.3926/cv 0.3034/cv vs still 0.174/train - It becomes inconsistently overfit on due date.
+
+
+Before working input scaling:
+
+No input scaling 0.164,0.1650,0.1636
+No input scaling,n_a=1 0.1672
+No input scaling,n_a=2 0.1655
+No input scaling,n_a=3 0.1649
+No input scaling,n_a=5 0.164,0.1638
+No input scaling,n_a=6 0.1643
+
+No input scaling,layer=GRU 0.1653
+No input scaling,layer=GRU,n_a=2 0.1642
+
+No input scaling,layer=LSTM,n_a=2 0.1644
+
+
+
+
+
