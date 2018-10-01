@@ -15,6 +15,9 @@ def buildmodel(n_a, layer):
         y = GRU(n_a)(x)
     elif layer == "LSTM":
         y = LSTM(n_a)(x)
+    elif layer == "2xSimpleRNN":
+        y = SimpleRNN(n_a, return_sequences=True)(x)
+        y = SimpleRNN(n_a)(y)
     else:
         y = SimpleRNN(n_a)(x)
 
@@ -30,14 +33,16 @@ def loaddata(summaryfile, scaler, padvalue):
     allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
 
     xlists_estimates = []
-    # xlists_times = []
+    xlists_times = []
+    xlists_hascomment = []
     y = np.zeros((summarydata.shape[0], 1))
     maxestimates = 0
     for i in range(summarydata.shape[0]):
         responses = allresponses[(allresponses[0] == summarydata.iloc[i, 0]) & allresponses[2].notnull()]
         estimates = responses[2].values.tolist()
         xlists_estimates.append(estimates)
-        # xlists_times.append(responses[1].values.tolist())
+        xlists_times.append(responses[1].values.tolist())
+        xlists_hascomment.append(responses[4].notnull().tolist())
         y[i][0] = (1 if summarydata.iloc[i, 5] == 1 else 0)
         if len(estimates) > maxestimates:
             maxestimates = len(estimates)
@@ -47,8 +52,22 @@ def loaddata(summaryfile, scaler, padvalue):
     x = np.full((summarydata.shape[0], maxestimates, Features), padvalue, np.float32)
     for i in range(summarydata.shape[0]):
         for j in range(len(xlists_estimates[i])):
-            x[i, j+maxestimates-len(xlists_estimates[i]), 0] = xlists_estimates[i][j]
-            # x[i, j+maxestimates-len(xlists_estimates[i]), 1] = summarydata.iloc[i, 2] - xlists_times[i][j]
+            feature = 0
+            x[i, j+maxestimates-len(xlists_estimates[i]), feature] = xlists_estimates[i][j]
+            feature += 1
+
+            # Timestamp feature
+            # x[i, j+maxestimates-len(xlists_estimates[i]), feature] = summarydata.iloc[i, 2] - xlists_times[i][j]
+            # feature += 1
+
+            # Question length feature
+            # question = summarydata.iloc[i, 7]
+            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = len(question) if type(question) == "str" else 0
+            # feature += 1
+
+            # Has Comment feature
+            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = 1 if xlists_hascomment[i][j] else 0
+            # feature += 1
 
     x.shape = (summarydata.shape[0] * maxestimates, Features)
 
@@ -82,8 +101,21 @@ def avg_probability(x):
 def predict(m, xlist_estimates, scaler):
     x = np.full((1, len(xlist_estimates), Features), -1, np.float32)
     for i in range(len(xlist_estimates)):
-        x[0, i, 0] = xlist_estimates[i]
-        # x[0, i, 1] = duetime - xlist_times[i]
+        feature = 0
+        x[0, i, feature] = xlist_estimates[i]
+        feature += 1
+
+        # Timestamp feature
+        # x[0, i, feature] = duetime - xlist_times[i]
+        # feature += 1
+
+        # Question length feature
+        # x[0, i, feature] = len(question)
+        # feature += 1
+
+        # Has Comment feature
+        # x[0, i, feature] = 1 if xlist_hascomment[i] else 0
+        # feature += 1
 
     x.shape = (len(xlist_estimates), Features)
     scaler.transform(x, copy=None)
