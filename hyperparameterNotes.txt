@@ -6,6 +6,7 @@ Assume by default:
 - padvalue=-1
 - layer=SimpleRNN
 - n_a=4
+- dense_layers=1
 
 MSE is for CV set; if train set is omitted, CV set performed better than it.
 
@@ -14,8 +15,12 @@ After working input scaling:
 
 layer=GRU 0.1635
 layer=LSTM 0.1636
+dense_layers=2 0.1636
 All default: 0.1637
+n_a=2,dense_layers=4 0.1637
 n_a=6 0.1643
+dense_layers=4 0.1651
+n_a=2,dense_layers=2 0.1661
 n_a=2,layer=2xSimpleRNN: 0.1917
 n_a=1 0.2457
 layer=2xSimpleRNN: 0.273/cv vs 0.173/train - Overfit, with no reduction to bias.
@@ -28,7 +33,12 @@ All default: 0.3926/cv 0.3034/cv vs still 0.174/train - It becomes inconsistentl
 
 After adding question length feature:
 
-All default: 0.1642 - Doesn't seem to contribute a detectable amount of information.
+All default: 0.1643 - Doesn't seem to contribute a detectable amount of information.
+
+
+After adding question avg wordvec feature:
+
+All default: 0.1701 - Seems to worsen fit (although CV still doing better than train)
 
 
 After adding has comment feature:

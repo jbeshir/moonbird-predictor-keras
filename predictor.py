@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from keras.models import Model
@@ -7,7 +8,38 @@ from sklearn.preprocessing import StandardScaler
 Features = 1
 
 
-def buildmodel(n_a, layer):
+def loadembeddings(path):
+    embeddings_index = {}
+    f = open(path, 'r', encoding='utf8')
+    for line in f:
+        values = line.split()
+        word = values[0]
+        coefs = np.asarray(values[1:], dtype='float32')
+        embeddings_index[word] = coefs
+    f.close()
+    return embeddings_index
+
+
+def avgembedding(embeddings_index, s):
+    avg_embedding = np.zeros(50)
+    count = 0
+
+    if not isinstance(s, str):
+        return avg_embedding
+
+    words = s.split(' ')
+    for word in words:
+        embedding = embeddings_index.get(word.strip(',.-').strip())
+        if embedding is not None:
+            avg_embedding += embedding
+            count += 1
+
+    if count != 0:
+        avg_embedding = avg_embedding / count
+    return avg_embedding
+
+
+def buildmodel(n_a, layer, dense_layers):
 
     x = Input((None, Features))
 
@@ -21,6 +53,9 @@ def buildmodel(n_a, layer):
     else:
         y = SimpleRNN(n_a)(x)
 
+    for i in range(dense_layers-1):
+        y = Dense(4)(y)
+
     y = Dense(1, activation='sigmoid')(y)
 
     model = Model(inputs=[x], outputs=[y])
@@ -28,7 +63,7 @@ def buildmodel(n_a, layer):
     return model
 
 
-def loaddata(summaryfile, scaler, padvalue):
+def loaddata(summaryfile, embeddings_index, scaler, padvalue):
     summarydata = pd.read_csv(summaryfile, sep=',', header=None)
     allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
 
@@ -62,12 +97,18 @@ def loaddata(summaryfile, scaler, padvalue):
 
             # Question length feature
             # question = summarydata.iloc[i, 7]
-            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = len(question) if type(question) == "str" else 0
+            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = len(question) if isinstance(question, str) else 0
             # feature += 1
 
             # Has Comment feature
             # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = 1 if xlists_hascomment[i][j] else 0
             # feature += 1
+
+            # Question avg wordvec feature
+            # question = summarydata.iloc[i, 7]
+            # x[i, j + maxestimates - len(xlists_estimates[i]), feature:feature+50]\
+            #     = avgembedding(embeddings_index, question)
+            # feature += 50
 
     x.shape = (summarydata.shape[0] * maxestimates, Features)
 
