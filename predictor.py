@@ -63,7 +63,7 @@ def buildmodel(n_a, layer, dense_layers):
     return model
 
 
-def loaddata(summaryfile, embeddings_index, scaler, padvalue):
+def loaddata(summaryfile, embeddings_index, scaler):
     summarydata = pd.read_csv(summaryfile, sep=',', header=None)
     allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
 
@@ -82,35 +82,37 @@ def loaddata(summaryfile, embeddings_index, scaler, padvalue):
         if len(estimates) > maxestimates:
             maxestimates = len(estimates)
 
+    padsize = maxestimates
+
     # We put our padding at the start rather than the end of the data,
     # to make it easier to learn.
-    x = np.full((summarydata.shape[0], maxestimates, Features), padvalue, np.float32)
+    x = np.full((summarydata.shape[0], padsize, Features), np.nan, np.float32)
     for i in range(summarydata.shape[0]):
         for j in range(len(xlists_estimates[i])):
             feature = 0
-            x[i, j+maxestimates-len(xlists_estimates[i]), feature] = xlists_estimates[i][j]
+            x[i, j+padsize-len(xlists_estimates[i]), feature] = xlists_estimates[i][j]
             feature += 1
 
             # Timestamp feature
-            # x[i, j+maxestimates-len(xlists_estimates[i]), feature] = summarydata.iloc[i, 2] - xlists_times[i][j]
+            # x[i, j+padsize-len(xlists_estimates[i]), feature] = summarydata.iloc[i, 2] - xlists_times[i][j]
             # feature += 1
 
             # Question length feature
             # question = summarydata.iloc[i, 7]
-            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = len(question) if isinstance(question, str) else 0
+            # x[i, j + padsize - len(xlists_estimates[i]), feature] = len(question) if isinstance(question, str) else 0
             # feature += 1
 
             # Has Comment feature
-            # x[i, j + maxestimates - len(xlists_estimates[i]), feature] = 1 if xlists_hascomment[i][j] else 0
+            # x[i, j + padsize - len(xlists_estimates[i]), feature] = 1 if xlists_hascomment[i][j] else 0
             # feature += 1
 
             # Question avg wordvec feature
             # question = summarydata.iloc[i, 7]
-            # x[i, j + maxestimates - len(xlists_estimates[i]), feature:feature+50]\
+            # x[i, j + padsize - len(xlists_estimates[i]), feature:feature+50]\
             #     = avgembedding(embeddings_index, question)
             # feature += 50
 
-    x.shape = (summarydata.shape[0] * maxestimates, Features)
+    x.shape = (summarydata.shape[0] * padsize, Features)
 
     if isinstance(scaler, bool) and scaler:
         scaler = StandardScaler()
@@ -118,8 +120,9 @@ def loaddata(summaryfile, embeddings_index, scaler, padvalue):
 
     if isinstance(scaler, StandardScaler):
         x = scaler.transform(x, copy=None)
+        x = np.nan_to_num(x, copy=False)
 
-    x.shape = (summarydata.shape[0], maxestimates, Features)
+    x.shape = (summarydata.shape[0], padsize, Features)
 
     return x, y, scaler
 
@@ -130,7 +133,7 @@ def avg_probability(x):
         count = 0
         total = 0
         for j in range(x.shape[1]):
-            if x[i, j, 0] == -1:
+            if np.isnan(x[i, j, 0]):
                 continue
             total += x[i, j, 0]
             count += 1
@@ -140,26 +143,29 @@ def avg_probability(x):
 
 
 def predict(m, xlist_estimates, scaler):
-    x = np.full((1, len(xlist_estimates), Features), -1, np.float32)
+    padsize = len(xlist_estimates)
+    x = np.full((1, padsize, Features), np.nan, np.float32)
     for i in range(len(xlist_estimates)):
         feature = 0
-        x[0, i, feature] = xlist_estimates[i]
+        x[0, padsize - len(xlist_estimates) + i, feature] = xlist_estimates[i]
         feature += 1
 
         # Timestamp feature
-        # x[0, i, feature] = duetime - xlist_times[i]
+        # x[0, padsize - len(xlist_estimates) + i, feature] = duetime - xlist_times[i]
         # feature += 1
 
         # Question length feature
-        # x[0, i, feature] = len(question)
+        # x[0, padsize - len(xlist_estimates) + i, feature] = len(question)
         # feature += 1
 
         # Has Comment feature
-        # x[0, i, feature] = 1 if xlist_hascomment[i] else 0
+        # x[0, padsize - len(xlist_estimates) + i, feature] = 1 if xlist_hascomment[i] else 0
         # feature += 1
 
-    x.shape = (len(xlist_estimates), Features)
+    x.shape = (padsize, Features)
     scaler.transform(x, copy=None)
-    x.shape = (1, len(xlist_estimates), Features)
+    x.shape = (1, padsize, Features)
+
+    x = np.nan_to_num(x, copy=False)
 
     return m.predict(x)
