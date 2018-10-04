@@ -10,9 +10,32 @@ Assume by default:
 
 MSE is for CV set; if train set is omitted, CV set performed better than it.
 
+
+After working masked sequential layer and scaling:
+
+layer=LSTM 0.1631
+All default: 0.1640
+dense_layers=2 0.1640
+layer=2xSimpleRNN: 0.1642 - We don't overfit anymore. Still don't get any improvements over a single RNN layer.
+
+
+After adding prediction timestamp feature (with masked sequential layer and input scaling):
+
+layer=LSTM 0.1633 - Not as good as LSTM without this feature. Harder to train?
+All default: 0.1637 - No more overfit. Slight improvement?
+
+
+After adding has comment feature (with masked sequential layer and input scaling):
+
+layer=LSTM 0.1634 - Not as good as LSTM without this feature. Harder to train?
+All default: 0.1639 - Very slight improvement?
+
+
+
 After working masked input scaling:
 
 All default: 0.1633
+
 
 
 After working unmasked input scaling:
@@ -51,6 +74,7 @@ All default: 0.1717 - Seems to make it harder to train.
 epochs=200: 0.2340/cv vs 0.1775/train - Apparently became overfit.
 
 
+
 Before working input scaling, only prediction value as feature:
 
 No input scaling 0.164,0.1650,0.1636
@@ -64,8 +88,3 @@ No input scaling,layer=GRU 0.1653
 No input scaling,layer=GRU,n_a=2 0.1642
 
 No input scaling,layer=LSTM,n_a=2 0.1644
-
-
-
-
-

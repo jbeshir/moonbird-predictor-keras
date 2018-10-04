@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from keras.models import Model
-from keras.layers import Dense, Input, GRU, LSTM, SimpleRNN
+from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN
 from sklearn.preprocessing import StandardScaler
 
 Features = 1
@@ -42,16 +42,17 @@ def avgembedding(embeddings_index, s):
 def buildmodel(n_a, layer, dense_layers):
 
     x = Input((None, Features))
+    y = Masking(mask_value=0.0)(x)
 
     if layer == "GRU":
-        y = GRU(n_a)(x)
+        y = GRU(n_a)(y)
     elif layer == "LSTM":
-        y = LSTM(n_a)(x)
+        y = LSTM(n_a)(y)
     elif layer == "2xSimpleRNN":
-        y = SimpleRNN(n_a, return_sequences=True)(x)
+        y = SimpleRNN(n_a, return_sequences=True)(y)
         y = SimpleRNN(n_a)(y)
     else:
-        y = SimpleRNN(n_a)(x)
+        y = SimpleRNN(n_a)(y)
 
     for i in range(dense_layers-1):
         y = Dense(4)(y)
