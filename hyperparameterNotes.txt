@@ -11,10 +11,16 @@ Assume by default:
 MSE is for CV set; if train set is omitted, CV set performed better than it.
 
 
+After switching the loss function to MSE proper, working masked sequential layer and scaling:
+
+layer=LSTM 0.1632
+All default: 0.1644
+
+
 After working masked sequential layer and scaling:
 
 layer=LSTM 0.1631
-All default: 0.1640
+All default: 0.1644 (0.1640 previously seems to have been a data error?)
 dense_layers=2 0.1640
 layer=2xSimpleRNN: 0.1642 - We don't overfit anymore. Still don't get any improvements over a single RNN layer.
 

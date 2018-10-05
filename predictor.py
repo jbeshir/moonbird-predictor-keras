@@ -60,7 +60,7 @@ def buildmodel(n_a, layer, dense_layers):
     y = Dense(1, activation='sigmoid')(y)
 
     model = Model(inputs=[x], outputs=[y])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy', 'mean_squared_error'])
+    model.compile(optimizer='adam', loss='mean_squared_error')
     return model
 
 
