@@ -7,14 +7,49 @@ Assume by default:
 - layer=SimpleRNN
 - n_a=4
 - dense_layers=1
+- L1 regularisation: 0.0
+- L2 regularisation: 0.0
+
+RegLSTM refers to L1 and L2 regularisation only applied to the LSTM layer, not others.
 
 MSE is for CV set; if train set is omitted, CV set performed better than it.
 
 
 After switching the loss function to MSE proper, working masked sequential layer and scaling:
 
-layer=LSTM 0.1632
+layer=LSTM 0.1632/cv 0.1713/train
+layer=LSTM,dense_layers=2,L1=0.000003,L2=0.000003 0.1632/cv 0.1713/train - Almost identical performance to LSTM alone.
+layer=LSTM,dense_layers=2,L1=0.0000003,L2=0.0000003 0.1634/cv 0.1714/train - Slightly higher bias.
+layer=LSTM,dense_layers=2,L1=0.00003,L2=0.00003 0.1634/cv 0.1714/train - Slightly higher bias.
+layer=LSTM,dense_layers=2,L1=0.0001,L2=0.0001 0.1634/cv 0.1715/train - Slightly higher bias.
+layer=2xLSTM 0.1636/cv 0.1708/train - Slight training improvement but more overfitting.
+layer=LSTM,dense_layers=2 0.1640/cv 0.1702/train - Training improvement but more overfitting.
+layer=LSTM,dense_layers=2,L1=0.0003,L2=0.0003 0.1641/cv 0.1723/train - Slightly higher bias.
+layer=LSTM,dense_layers=2,L1=0.001,L2=0.001 0.1653/cv 0.1734/train - Higher bias.
+layer=2xSimpleRNN 0.1642/cv 0.1710/train
 All default: 0.1644
+
+After adding prediction timestamp feature (with above):
+
+layer=LSTM 0.1637/cv and 0.1712/train - Looks like a slight training improvement but slightly more overfit.
+
+After adding has comment feature (with above):
+
+layer=LSTM 0.1636/cv and 0.1715/train - No improvement.
+
+After adding prediction timestamp, has comment, and question length features (with above):
+
+All default: 0.1641/cv and 0.1720/train - Very slight improvement if any.
+
+After adding average wordvec of question feature (with above):
+
+layer=LSTM 0.1754/cv 0.1531/train - Overfit, but major training improvement. Retry with regularisation?
+layer=RegLSTM+L1=0.01,L2=0.02 0.1680/cv and 0.1758/train - Suffers from higher bias.
+layer=RegLSTM+L1=0.003,L2=0.003 0.1647/cv and 0.1722/train - Slightly worse than without the feature, but much less overfit.
+layer=RegLSTM+L1=0.001,L2=0.001 0.1644/cv and 0.1693/train - Slightly worse than without the feature, but much less overfit. Training improvement.
+layer=RegLSTM+L1=0.0003,L2=0.0003 0.1669/cv and 0.1630/train - Regularisation reduced overfit, but fit is still worse, and it is still doing worse than without the feature.
+layer=RegLSTM+L1=0.0001,L2=0.0001 0.17415/cv and 0.1543/train - Slight improvement from regularisation relatively to unregularised, but not much.
+
 
 
 After working masked sequential layer and scaling:

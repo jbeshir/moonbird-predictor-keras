@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from keras.models import Model
 from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN
+from keras.regularizers import l1_l2
 from sklearn.preprocessing import StandardScaler
 
 Features = 1
@@ -39,28 +40,31 @@ def avgembedding(embeddings_index, s):
     return avg_embedding
 
 
-def buildmodel(n_a, layer, dense_layers):
+def buildmodel(n_a, layer, dense_layers, l1, l2):
 
     x = Input((None, Features))
     y = Masking(mask_value=0.0)(x)
 
     if layer == "GRU":
-        y = GRU(n_a)(y)
+        y = GRU(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
     elif layer == "LSTM":
-        y = LSTM(n_a)(y)
+        y = LSTM(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
     elif layer == "2xSimpleRNN":
-        y = SimpleRNN(n_a, return_sequences=True)(y)
-        y = SimpleRNN(n_a)(y)
+        y = SimpleRNN(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2), return_sequences=True)(y)
+        y = SimpleRNN(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
+    elif layer == "2xLSTM":
+        y = LSTM(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2), return_sequences=True)(y)
+        y = LSTM(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
     else:
         y = SimpleRNN(n_a)(y)
 
     for i in range(dense_layers-1):
-        y = Dense(4)(y)
+        y = Dense(4, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
 
-    y = Dense(1, activation='sigmoid')(y)
+    y = Dense(1, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2), activation='sigmoid')(y)
 
     model = Model(inputs=[x], outputs=[y])
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_squared_error'])
     return model
 
 
