@@ -1,8 +1,9 @@
 import os
 import numpy as np
 import pandas as pd
+from keras import backend as K
 from keras.models import Model
-from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN
+from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN, Subtract, Multiply
 from keras.regularizers import l1_l2
 from sklearn.preprocessing import StandardScaler
 
@@ -40,10 +41,29 @@ def avgembedding(embeddings_index, s):
     return avg_embedding
 
 
-def buildmodel(n_a, layer, dense_layers, l1, l2):
+def buildmodel_defaults(scaler=None):
+    # Hyperparameters
+    n_a = 4
+    epochs = 100
+    layer = "LSTM"
+    dense_layers = 1
+    l1 = 0.0
+    l2 = 0.0
+
+    return buildmodel(n_a, layer, dense_layers, l1, l2, scaler)
+
+
+def buildmodel(n_a, layer, dense_layers, l1, l2, scaler=None):
 
     x = Input((None, Features))
-    y = Masking(mask_value=0.0)(x)
+    y = x
+    if scaler is not None:
+        mean = K.constant(scaler.mean_, dtype='float32', name='mean', shape=(1, Features))
+        scale = K.constant(1 / scaler.scale_, dtype='float32', name='scale', shape=(1, Features))
+        y = Subtract()([y, Input(tensor=mean)])
+        y = Multiply()([y, Input(tensor=scale)])
+
+    y = Masking(mask_value=0.0)(y)
 
     if layer == "GRU":
         y = GRU(n_a, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2))(y)
@@ -63,7 +83,10 @@ def buildmodel(n_a, layer, dense_layers, l1, l2):
 
     y = Dense(1, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2), activation='sigmoid')(y)
 
-    model = Model(inputs=[x], outputs=[y])
+    if scaler is not None:
+        model = Model(inputs=[x, mean, scale], outputs=[y])
+    else:
+        model = Model(inputs=[x], outputs=[y])
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_squared_error'])
     return model
 
@@ -167,9 +190,10 @@ def predict(m, xlist_estimates, scaler):
         # x[0, padsize - len(xlist_estimates) + i, feature] = 1 if xlist_hascomment[i] else 0
         # feature += 1
 
-    x.shape = (padsize, Features)
-    scaler.transform(x, copy=None)
-    x.shape = (1, padsize, Features)
+    if scaler is not None:
+        x.shape = (padsize, Features)
+        x = scaler.transform(x, copy=None)
+        x.shape = (1, padsize, Features)
 
     x = np.nan_to_num(x, copy=False)
 

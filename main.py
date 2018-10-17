@@ -2,18 +2,10 @@ import numpy as np
 import predictor
 from sklearn.externals import joblib
 
-# Hyperparameters
-n_a = 4
-epochs = 100
-layer = "LSTM"
-dense_layers = 2
-l1 = 0.0
-l2 = 0.0
-
 embeddings_index = predictor.loadembeddings('glove.6B.50d.txt')
 
 # Build model
-model = predictor.buildmodel(n_a, layer, dense_layers, l1, l2)
+model = predictor.buildmodel_defaults()
 print(model.summary())
 
 # Load training data and train

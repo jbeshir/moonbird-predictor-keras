@@ -6,6 +6,8 @@ import tensorflow.saved_model.signature_constants as signature_constants
 import tensorflow.saved_model.tag_constants as tag_constants
 from tensorflow.saved_model.signature_def_utils import predict_signature_def
 
+import predictor
+
 def to_savedmodel(model, export_path):
   """Convert the Keras HDF5 model into TensorFlow SavedModel.
     Copied from https://github.com/GoogleCloudPlatform/cloudml-samples/blob/master/census/keras/trainer/model.py"""
@@ -24,6 +26,21 @@ def to_savedmodel(model, export_path):
     )
     builder.save()
 
-model = keras.models.load_model("model.hdf5")
-to_savedmodel(model, 'SavedModel')
+
+basic_model = keras.models.load_model("model.hdf5")
+scaler = joblib.load("scaler.save")
+temp_weights = [layer.get_weights() for layer in basic_model.layers if len(layer.get_weights()) != 0]
+
+# Rebuild the model with our scaling baked into it, so we don't need to preprocess our input tensor.
+weighted_layer_i = 0
+scaled_model = predictor.buildmodel_defaults(scaler)
+for layer in scaled_model.layers:
+    if len(layer.get_weights()) != 0:
+        layer.set_weights(temp_weights[weighted_layer_i])
+        weighted_layer_i += 1
+
+# Test prediction.
+print(predictor.predict(scaled_model, [0.9], None))
+
+to_savedmodel(scaled_model, 'SavedModel')
 
