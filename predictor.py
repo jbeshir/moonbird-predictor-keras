@@ -6,6 +6,7 @@ from keras.models import Model
 from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN, Subtract, Multiply
 from keras.regularizers import l1_l2
 from sklearn.preprocessing import StandardScaler
+from tensorflow.python.lib.io import file_io
 
 Features = 1
 
@@ -91,9 +92,11 @@ def buildmodel(n_a, layer, dense_layers, l1, l2, scaler=None):
     return model
 
 
-def loaddata(summaryfile, embeddings_index, scaler):
-    summarydata = pd.read_csv(summaryfile, sep=',', header=None)
-    allresponses = pd.read_csv('responsedata.csv', sep=',', header=None)
+def loaddata(summaryfile, responsefile, embeddings_index, scaler):
+    with file_io.FileIO(summaryfile, mode='r') as f:
+        summarydata = pd.read_csv(f, sep=',', header=None)
+    with file_io.FileIO(responsefile, mode='r') as f:
+        allresponses = pd.read_csv(f, sep=',', header=None)
 
     xlists_estimates = []
     xlists_times = []
