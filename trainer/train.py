@@ -1,6 +1,8 @@
-import io
-import os
 import argparse
+import os
+import shutil
+import tempfile
+import keras
 import numpy as np
 import h5py
 from tensorflow.python.lib.io import file_io
@@ -10,18 +12,24 @@ import trainer.export_to_tensorflow as export_to_tensorflow
 import trainer.predictor as predictor
 
 
-def train_model(train_file='./data/', job_dir='./job/', glove_file=None, num_epochs=100, **args):
+def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glove_file=None, num_epochs=100, **args):
 
     embeddings_index = None
     if glove_file is not None:
         embeddings_index = predictor.loadembeddings(glove_file)
 
-    # Build model
-    model = predictor.buildmodel_defaults()
+    if prev_model_dir is None:
+        # Build model
+        model = predictor.buildmodel_defaults()
+        scaler = True
+    else:
+        # Load previous model iteration
+        model = keras.models.load_model(h5py.File(open_local_or_gcs(prev_model_dir + "model.hdf5", 'rb'), mode='r'))
+        scaler = joblib.load(open_local_or_gcs(prev_model_dir + "scaler.save", 'rb'))
     print(model.summary())
 
     # Load training data and train
-    Xtrain, Ytrain, scaler = predictor.loaddata(train_file + 'summarydata-train.csv', train_file + "responsedata.csv", embeddings_index, True)
+    Xtrain, Ytrain, scaler = predictor.loaddata(train_file + 'summarydata-train.csv', train_file + "responsedata.csv", embeddings_index, scaler)
     model.fit(Xtrain, Ytrain, epochs=num_epochs, batch_size=128)
 
     # Load CV data and evaluate
@@ -32,24 +40,31 @@ def train_model(train_file='./data/', job_dir='./job/', glove_file=None, num_epo
     Ycv_avg = predictor.avg_probability(Xcv_avg)
     print("Naive averaging MSE:", np.mean(np.square(Ycv_avg - Ycv), axis=0))
 
-    # Because H5PY fails if we try to pass it a gcsio object directly.
-    modelBuf = io.BytesIO()
-    model.save(h5py.File(modelBuf))
-    with write_local_or_gcs(job_dir + "model/model.hdf5") as f:
-        f.write(modelBuf.read())
+    # H5PY produced corrupt files when passed a file-like object, at time/platform of development.
+    # It also insists on being able to read, which breaks GCS-backed file-like objects.
+    tempDir = tempfile.mkdtemp()
+    try:
+        tempFile = tempDir + os.path.sep + "model.hdf5"
+        model.save(tempFile)
 
-    joblib.dump(scaler, write_local_or_gcs(job_dir + "model/scaler.save"))
+        with open_local_or_gcs(job_dir + "model/model.hdf5", 'wb') as f:
+            with open(tempFile, 'rb') as tempFd:
+                f.write(tempFd.read())
+    finally:
+        shutil.rmtree(tempDir)
+
+    joblib.dump(scaler, open_local_or_gcs(job_dir + "model/scaler.save", 'wb'))
 
     # Export to TensorFlow Saved Model suitable for serving.
     export_to_tensorflow.to_savedmodel(model, scaler, job_dir + "saved_model/")
 
 
-def write_local_or_gcs(path):
+def open_local_or_gcs(path, mode):
     if path.startswith("gs://"):
-        return file_io.FileIO(path, 'wb')
+        return file_io.FileIO(path, mode)
     else:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        return open(path, 'wb')
+        return open(path, mode)
 
 
 if __name__ == '__main__':
@@ -67,6 +82,10 @@ if __name__ == '__main__':
       help='Number of epochs to run for',
       default=100,
       type=int)
+    parser.add_argument(
+      '--prev-model-dir',
+      help='An existing model to use as a starting point for training. Used for incremental training.',
+      default=None)
     parser.add_argument(
       '--glove-file',
       help='Path to the glove.6B.50d.txt file containing our word embeddings',
