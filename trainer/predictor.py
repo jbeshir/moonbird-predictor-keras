@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import pandas as pd
 from keras import backend as K
@@ -13,13 +12,13 @@ Features = 1
 
 def loadembeddings(path):
     embeddings_index = {}
-    f = open(path, 'r', encoding='utf8')
-    for line in f:
-        values = line.split()
-        word = values[0]
-        coefs = np.asarray(values[1:], dtype='float32')
-        embeddings_index[word] = coefs
-    f.close()
+
+    with file_io.FileIO(path, mode='r') as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
     return embeddings_index
 
 

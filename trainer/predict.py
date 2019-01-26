@@ -1,6 +1,6 @@
 import keras.models
 from sklearn.externals import joblib
-import predictor
+import trainer.predictor as predictor
 
 model = keras.models.load_model("model.hdf5")
 scaler = joblib.load("scaler.save")

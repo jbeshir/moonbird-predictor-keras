@@ -1,7 +1,7 @@
 import keras.models
 import numpy as np
 from sklearn.externals import joblib
-import predictor
+import trainer.predictor as predictor
 
 data_path = "./data/"
 

@@ -6,7 +6,7 @@ import tensorflow.saved_model.signature_constants as signature_constants
 import tensorflow.saved_model.tag_constants as tag_constants
 from tensorflow.saved_model.signature_def_utils import predict_signature_def
 
-import predictor
+import trainer.predictor as predictor
 
 
 def to_savedmodel(basic_model, scaler, export_path):
