@@ -4,6 +4,10 @@ import pandas as pd
 # Load in all response summary data.
 AllSummaryData = pd.read_csv('summarydata.csv', sep=',', header=None)
 
+# Save out the unresolved summaries separately.
+UnresolvedSummaryData = AllSummaryData[AllSummaryData[5] == 0]
+UnresolvedSummaryData.to_csv('summarydata-unresolved.csv', index=False, header=False)
+
 AllShuffledSummaryData = AllSummaryData[AllSummaryData[5] != 0].sample(frac=1)
 
 n_test = np.floor(AllShuffledSummaryData.shape[0] * 0.2).astype(np.int64)
