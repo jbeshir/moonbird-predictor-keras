@@ -12,7 +12,7 @@ import trainer.export_to_tensorflow as export_to_tensorflow
 import trainer.predictor as predictor
 
 
-def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glove_file=None, num_epochs=100, **args):
+def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glove_file=None, num_epochs=100, train_online_test=False, **args):
 
     embeddings_index = None
     if glove_file is not None:
@@ -30,11 +30,19 @@ def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glo
 
     # Load training data and train
     Xtrain, Ytrain, scaler = predictor.loaddata(train_file + 'summarydata-train.csv', train_file + "responsedata.csv", embeddings_index, scaler)
+    XOnlineTrain, YOnlineTrain = None, None
+    if train_online_test:
+        splitPos = int(Xtrain.shape[0] * 0.995)
+        Xtrain, XOnlineTrain = np.array_split(Xtrain, [splitPos])
+        Ytrain, YOnlineTrain = np.array_split(Ytrain, [splitPos])
     model.fit(Xtrain, Ytrain, epochs=num_epochs, batch_size=128)
+    if train_online_test:
+        model.fit(XOnlineTrain, YOnlineTrain, epochs=1, batch_size=128)
 
     # Load CV data and evaluate
-    Xcv, Ycv, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, scaler)
-    print(model.evaluate(Xcv, Ycv, batch_size=128))
+    if train_online_test:
+        Xcv, Ycv, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, scaler)
+        print(model.evaluate(Xcv, Ycv, batch_size=128))
 
     Xcv_avg, _, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, False)
     Ycv_avg = predictor.avg_probability(Xcv_avg)
@@ -90,6 +98,10 @@ if __name__ == '__main__':
       '--glove-file',
       help='Path to the glove.6B.50d.txt file containing our word embeddings',
       default=None)
+    parser.add_argument(
+      '--train-online-test',
+      help='Tests online training parameters',
+	  action='store_true')
     args = parser.parse_args()
     arguments = args.__dict__
     train_model(**arguments)
