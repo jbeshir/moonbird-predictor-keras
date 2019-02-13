@@ -44,9 +44,9 @@ def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glo
         Xcv, Ycv, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, scaler)
         print(model.evaluate(Xcv, Ycv, batch_size=128))
 
-    Xcv_avg, _, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, False)
-    Ycv_avg = predictor.avg_probability(Xcv_avg)
-    print("Naive averaging MSE:", np.mean(np.square(Ycv_avg - Ycv), axis=0))
+		Xcv_avg, _, _ = predictor.loaddata(train_file + 'summarydata-cv.csv', train_file + "responsedata.csv", embeddings_index, False)
+		Ycv_avg = predictor.avg_probability(Xcv_avg)
+		print("Naive averaging MSE:", np.mean(np.square(Ycv_avg - Ycv), axis=0))
 
     # H5PY produced corrupt files when passed a file-like object, at time/platform of development.
     # It also insists on being able to read, which breaks GCS-backed file-like objects.
