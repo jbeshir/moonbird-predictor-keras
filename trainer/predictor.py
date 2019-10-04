@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-from keras import backend as K
-from keras.models import Model
-from keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN, Subtract, Multiply
-from keras.regularizers import l1_l2
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN, Subtract, Multiply
+from tensorflow.keras.regularizers import l1_l2
 from sklearn.preprocessing import StandardScaler
 from tensorflow.python.lib.io import file_io
 

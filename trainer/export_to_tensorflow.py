@@ -1,10 +1,10 @@
-import keras.backend as K
-import keras.models
-from sklearn.externals import joblib
-import tensorflow.saved_model.builder as saved_model_builder
-import tensorflow.saved_model.signature_constants as signature_constants
-import tensorflow.saved_model.tag_constants as tag_constants
-from tensorflow.saved_model.signature_def_utils import predict_signature_def
+import tensorflow.keras.models as models
+import tensorflow.compat.v1.saved_model.builder as saved_model_builder
+import tensorflow.compat.v1.saved_model.signature_constants as signature_constants
+import tensorflow.compat.v1.saved_model.tag_constants as tag_constants
+from tensorflow.compat.v1.saved_model.signature_def_utils import predict_signature_def
+from tensorflow.compat.v1.keras.backend import get_session
+import joblib
 
 import trainer.predictor as predictor
 
@@ -31,7 +31,7 @@ def to_savedmodel(basic_model, scaler, export_path):
     signature = predict_signature_def(inputs={'input': model.inputs[0]},
                                     outputs={'income': model.outputs[0]})
 
-    with K.get_session() as sess:
+    with get_session() as sess:
         builder.add_meta_graph_and_variables(
             sess=sess,
             tags=[tag_constants.SERVING],
@@ -42,7 +42,7 @@ def to_savedmodel(basic_model, scaler, export_path):
 
 
 if __name__ == '__main__':
-    basic_model = keras.models.load_model("./model/model.hdf5")
+    basic_model = models.load_model("./model/model.hdf5")
     scaler = joblib.load("./model/scaler.save")
 
     to_savedmodel(basic_model, scaler, 'SavedModel')

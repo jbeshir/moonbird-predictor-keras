@@ -2,11 +2,11 @@ import argparse
 import os
 import shutil
 import tempfile
-import keras
+import tensorflow.keras as keras
 import numpy as np
 import h5py
+import joblib
 from tensorflow.python.lib.io import file_io
-from sklearn.externals import joblib
 
 import trainer.export_to_tensorflow as export_to_tensorflow
 import trainer.predictor as predictor

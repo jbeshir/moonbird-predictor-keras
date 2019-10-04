@@ -1,5 +1,5 @@
-import keras.models
-from sklearn.externals import joblib
+import tensorflow.keras as keras
+import joblib
 import trainer.predictor as predictor
 
 model = keras.models.load_model("model.hdf5")

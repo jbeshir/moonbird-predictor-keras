@@ -1,6 +1,6 @@
-import keras.models
+import tensorflow.keras.models as models
 import numpy as np
-from sklearn.externals import joblib
+import joblib
 import trainer.predictor as predictor
 
 data_path = "./data/"
@@ -8,7 +8,7 @@ data_path = "./data/"
 # Hyperparameters
 padvalue = -1
 
-model = keras.models.load_model("model.hdf5")
+model = models.load_model("model.hdf5")
 scaler = joblib.load("scaler.save")
 
 # Load CV data and evaluate
