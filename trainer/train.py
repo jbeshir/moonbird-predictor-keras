@@ -53,7 +53,7 @@ def train_model(train_file='./data/', job_dir='./job/', prev_model_dir=None, glo
     tempDir = tempfile.mkdtemp()
     try:
         tempFile = tempDir + os.path.sep + "model.hdf5"
-        model.save(tempFile)
+        model.save(tempFile, save_format='h5')
 
         with open_local_or_gcs(job_dir + "model/model.hdf5", 'wb') as f:
             with open(tempFile, 'rb') as tempFd:

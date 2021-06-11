@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Input, GRU, LSTM, Masking, SimpleRNN, Subtract, Multiply
@@ -9,6 +10,9 @@ from tensorflow.python.lib.io import file_io
 
 Features = 1
 
+# TF 1.x compat.
+if tf.executing_eagerly():
+   tf.compat.v1.disable_eager_execution()
 
 def loadembeddings(path):
     embeddings_index = {}
@@ -60,8 +64,8 @@ def buildmodel(n_a, layer, dense_layers, l1, l2, scaler=None):
     if scaler is not None:
         mean = K.constant(scaler.mean_, dtype='float32', name='mean', shape=(1, Features))
         scale = K.constant(1 / scaler.scale_, dtype='float32', name='scale', shape=(1, Features))
-        y = Subtract()([y, Input(tensor=mean)])
-        y = Multiply()([y, Input(tensor=scale)])
+        y = Subtract()([y, mean])
+        y = Multiply()([y, scale])
 
     y = Masking(mask_value=0.0)(y)
 
@@ -83,10 +87,7 @@ def buildmodel(n_a, layer, dense_layers, l1, l2, scaler=None):
 
     y = Dense(1, kernel_regularizer=l1_l2(l1=l1, l2=l2), bias_regularizer=l1_l2(l1=l1, l2=l2), activation='sigmoid')(y)
 
-    if scaler is not None:
-        model = Model(inputs=[x, mean, scale], outputs=[y])
-    else:
-        model = Model(inputs=[x], outputs=[y])
+    model = Model(inputs=[x], outputs=[y])
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_squared_error'])
     return model
 
