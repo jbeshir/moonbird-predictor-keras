@@ -15,5 +15,5 @@ setup(name='moonbird_predictor_keras',
           'numpy==1.19.4',
 		      'pandas==1.2.3',
 		      'scikit-learn==0.21.3',
-          'tensorflow==2.4.0'],
+          'tensorflow==2.5.0'],
       zip_safe=False)
