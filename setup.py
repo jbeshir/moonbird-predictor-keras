@@ -12,7 +12,7 @@ setup(name='moonbird_predictor_keras',
       install_requires=[
           'h5py==2.10.0',
           'joblib==1.2.0',
-          'numpy==1.19.4',
+          'numpy==1.22.0',
 		      'pandas==1.2.3',
 		      'scikit-learn==0.21.3',
           'tensorflow>=2.4.2'],
