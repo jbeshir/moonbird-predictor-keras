@@ -11,7 +11,7 @@ setup(name='moonbird_predictor_keras',
       license='MIT',
       install_requires=[
           'h5py==2.10.0',
-          'joblib==0.13.2',
+          'joblib==1.2.0',
           'numpy==1.19.4',
 		      'pandas==1.2.3',
 		      'scikit-learn==0.21.3',
